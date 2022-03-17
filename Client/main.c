@@ -28,9 +28,13 @@ int main(){
 
     char direccion[100];
     char ip[100];
-    printf( "Digite la direccion ip");
-    gets( ip);
-
+    char pixel[100];
+    char puerto[100];
+    printf("**Configurando Conexion **\n");
+    printf("Digite la direccion ip: ");
+    gets(ip);
+    printf("Digite el puerto: ");
+    gets(puerto);
 
     /*Se crea el socket*/
     SocketFD = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -48,7 +52,7 @@ int main(){
     memset(&stSockAddr, 0, sizeof stSockAddr);
 
     stSockAddr.sin_family = AF_INET;
-    stSockAddr.sin_port = htons(1100);
+    stSockAddr.sin_port = htons(atoi(puerto));
     Res = inet_pton(AF_INET, ip, &stSockAddr.sin_addr);
 
     sockLen = sizeof(stSockAddr);
@@ -61,31 +65,67 @@ int main(){
     }
 
     printf("Se ha conectado con el servidor:%s\n",(char *)inet_ntoa(stSockAddr.sin_addr));
-    printf( "Digite la direccion del archivo");
+    printf( "Digite la direccion del archivo: ");
     gets( direccion);
     /*Se abre el archivo a enviar*/
 
     if(strcmp( direccion, "end") == 0){
         close(SocketFD);
-    }else {
+    }else {        
         archivo = fopen(direccion, "rb");
         if (!archivo) {
             perror("Error al abrir el archivo:");
             exit(EXIT_FAILURE);
         }
 
+        /*char data[1024] = {0};
+
+        while(fgets(data, 1024, archivo) != NULL) {
+            if (send(SocketFD, data, sizeof(data), 0) == -1) {
+                perror("[-]Error in sending file.");
+                exit(1);
+            }
+        bzero(data, 1024);
+        }*/
+
         /*Se envia el archivo*/
+        fread(buffer, sizeof(char), BUFFSIZE, archivo);
         while (!feof(archivo)) {
-            fread(buffer, sizeof(char), BUFFSIZE, archivo);
+
+            //printf("FEOF => %d\n", feof(archivo));
+            
+            //printf("Enviando archivo // ");
+            
+            //printf("%s // ", buffer);
+            
             if (send(SocketFD, buffer, BUFFSIZE, 0) == ERROR)
                 perror("Error al enviar el archivo:");
+            //printf("Le envie datos al servidor\n");
+            fread(buffer, sizeof(char), BUFFSIZE, archivo);
         }
-
-        read(SocketFD, mensaje, sizeof(mensaje));
-        printf("\nConfirmación recibida:\n%s\n", mensaje);
-
+        //printf("FEOF => %d\n", feof(archivo));
+        printf("\nArchivo enviado\n");
+        //char endOfLine[BUFFSIZE] = "'";
+        //send(SocketFD, endOfLine, BUFFSIZE, 0);
+        //close(SocketFD);
 
         fclose(archivo);
+
+        
+
+        /*read(SocketFD, mensaje, sizeof(mensaje));
+        printf("\nRespuesta: %s\n", mensaje);
+        fclose(archivo);
+        close(SocketFD);
+
+        printf("Ingrese el valor del pixel: ");
+        gets(pixel);
+        if (send(SocketFD, pixel, 100, 0) == ERROR)
+                perror("Error al enviar el archivo:");
+
+        read(SocketFD, mensaje, sizeof(mensaje));
+        printf("\nRespuesta: %s\n", mensaje);*/
+
         close(SocketFD);
     }
 

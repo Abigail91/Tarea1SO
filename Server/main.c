@@ -68,7 +68,7 @@ int main(){
         close(SocketServerFD);
         exit(EXIT_FAILURE);
     }//End if-bind
-    inet_pton(AF_INET, direccIP, &stSockAddr.sin_addr);
+    inet_pton(AF_INET, "127.0.0.1", &stSockAddr.sin_addr);
     printf("Socket atado a la dirección %s\n",(char *)inet_ntoa(stSockAddr.sin_addr));
     if(listen(SocketServerFD, 10) == ERROR){
         perror("Error listen");
@@ -104,17 +104,33 @@ int main(){
 }//End main program
 
 void recibirArchivo(int SocketFD, FILE *file){
+
     char buffer[BUFFSIZE];
     int recibido = -1;
+    printf("Recibiendo archivo\n");
 
     /*Se abre el archivo para escritura*/
     file = fopen("archivoRecibido","wb");
-    enviarConfirmacion(SocketFD);
+    
     while((recibido = recv(SocketFD, buffer, BUFFSIZE, 0)) > 0){
-        printf("%s",buffer);
+        //printf("Recibi del cliente// %s\n",buffer);
         fwrite(buffer,sizeof(char),1,file);
+        //printf("Escribi en el archivo \n");
     }//Termina la recepción del archivo
+
+    printf("Archivo recibido\n");
+    
     fclose(file);
+
+    /*printf("Recibiendo el valor del pixel\n");
+
+    char pixel[BUFFSIZE];
+
+    recv(SocketFD, pixel, BUFFSIZE, 0);
+
+    
+    printf("Valor del pixel: %s\n", pixel);
+    enviarConfirmacion(SocketFD);*/
 
 
 }//End recibirArchivo procedure
