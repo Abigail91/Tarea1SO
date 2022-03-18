@@ -74,16 +74,16 @@ int main(){
     while (1){
 
         printf("Esperando nueva Conexion\n");
-        esperarConexion();
+        esperarConexion(); //Espera una nueva conexion
 
-        recibirArchivo(SocketClientFD, archivo);
+        recibirArchivo(SocketClientFD, archivo); //recibe la imagen
 
         printf("Esperando Parametro \n");
 
-        char pixel[3];
+        char pixel[3];       //El pixel va de 000 a 999
         esperarConexion();
 
-        recv(SocketClientFD, pixel, 3, 0);
+        recv(SocketClientFD, pixel, 3, 0); //Recibi el valor del pixel
         printf("Recibi el valor: %s\n", pixel); //Si aca pixel == end, no debe de hacer el algoritmo
 
         send(SocketClientFD, pixel, 3, 0); //Respuesta para el cliente (aca va el resultado del algoritmo)
