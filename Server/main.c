@@ -12,8 +12,24 @@
 #define PUERTO		1100
 #define ERROR		-1
 
+
+unsigned int len;
+struct sockaddr_in stSockAddr;
+struct sockaddr_in clSockAddr;
+struct sockaddr_in servaddr, client;
+FILE *archivo;
+char *direccIP;
+int SocketServerFD;
+int SocketClientFD;
+int clientLen;
+int serverLen;
+int number;
+char buff_rx[100];
+char buff_tx[100] = "Hello client, I am the server";
+
 /*Prototipos de función*/
 void recibirArchivo(int SocketFD, FILE *file);
+void esperarConexion();
 void enviarConfirmacion(int SocketFD);
 void enviarMD5SUM(int SocketFD);
 void getIP(int tipo, char * IP);
@@ -23,19 +39,7 @@ void getIP(int tipo, char * IP);
  * eth0: 2
 */
 int main(){
-    unsigned int len;
-    struct sockaddr_in stSockAddr;
-    struct sockaddr_in clSockAddr;
-    struct sockaddr_in servaddr, client;
-    FILE *archivo;
-    char *direccIP;
-    int SocketServerFD;
-    int SocketClientFD;
-    int clientLen;
-    int serverLen;
-    int number;
-    char buff_rx[100];
-    char buff_tx[100] = "Hello client, I am the server";
+    
     direccIP = malloc(20);
 
     /*Se obtiene la IP de la interfaz solicitada*/
@@ -68,23 +72,21 @@ int main(){
     }//End if-listen
 
     while (1){
-        clientLen = sizeof(clSockAddr);
 
-        //Espera por la conexión de un cliente//
-        if ((SocketClientFD = accept(SocketServerFD,
-                                     (struct sockaddr *) &clSockAddr,
-                                     &clientLen)) < 0){
-            perror("Fallo para aceptar la conexión del cliente");
-        }
-
-        /*Se configura la dirección del cliente*/
-        clSockAddr.sin_family = AF_INET;
-        clSockAddr.sin_port = htons(PUERTO);
-        printf("Cliente conectado: %s\n",inet_ntoa(clSockAddr.sin_addr));
-
-        /*Se recibe el archivo del cliente*/
+        printf("Esperando nueva Conexion\n");
+        esperarConexion();
 
         recibirArchivo(SocketClientFD, archivo);
+
+        printf("Esperando Parametro \n");
+
+        char pixel[3];
+        esperarConexion();
+
+        recv(SocketClientFD, pixel, 3, 0);
+        printf("Recibi el valor: %s\n", pixel); //Si aca pixel == end, no debe de hacer el algoritmo
+
+        send(SocketClientFD, pixel, 3, 0); //Respuesta para el cliente (aca va el resultado del algoritmo)
 
 
     }//End infinity while
@@ -98,7 +100,7 @@ void recibirArchivo(int SocketFD, FILE *file){
 
     char buffer[BUFFSIZE];
     int recibido = -1;
-    printf("Recibiendo archivo\n");
+    printf("Esperando archivo\n");
 
     /*Se abre el archivo para escritura*/
     file = fopen("archivoRecibido","wb");
@@ -113,16 +115,6 @@ void recibirArchivo(int SocketFD, FILE *file){
     
     fclose(file);
 
-    /*printf("Recibiendo el valor del pixel\n");
-
-    char pixel[BUFFSIZE];
-
-    recv(SocketFD, pixel, BUFFSIZE, 0);
-
-    
-    printf("Valor del pixel: %s\n", pixel);
-    enviarConfirmacion(SocketFD);*/
-
 
 }//End recibirArchivo procedure
 
@@ -135,6 +127,19 @@ void enviarConfirmacion(int SocketFD){
 
 
 }//End enviarConfirmacion
+
+void esperarConexion(){
+    clientLen = sizeof(clSockAddr);
+    //Espera por la conexión de un cliente//
+    if ((SocketClientFD = accept(SocketServerFD,(struct sockaddr *) &clSockAddr,&clientLen)) < 0){
+            perror("Fallo para aceptar la conexión del cliente");
+        }
+
+    /*Se configura la dirección del cliente*/
+    clSockAddr.sin_family = AF_INET;
+    clSockAddr.sin_port = htons(PUERTO);
+
+}
 
 void getIP(int tipo, char * IP){
     FILE *tmpIP;
